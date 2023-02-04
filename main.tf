@@ -4,7 +4,7 @@ resource "aws_rds_cluster" "aurora_cluster" {
   storage_encrypted            = true 
   cluster_identifier           = var.name
   master_username              = "master"
-  master_password              = "Admin1235cs"
+  master_password              = var.pwd
   availability_zones           = ["${var.region}a", "${var.region}b"]
   vpc_security_group_ids       = [aws_security_group.rdssg.id]
   db_subnet_group_name         = "${aws_db_subnet_group.aurora_subnet_group.name}"
@@ -21,16 +21,17 @@ resource "aws_rds_cluster" "aurora_cluster" {
   Name      = var.name
   Env       = var.Environment
   Terraform = "True"
-}
+  }
 }
 
 resource "aws_rds_cluster_instance" "cluster_instances" {
-  count              = 2
-  identifier         = "aurora-cluster-${count.index}" 
-  cluster_identifier = aws_rds_cluster.aurora_cluster.id
-  instance_class     = var.instance_type
-  engine             = aws_rds_cluster.aurora_cluster.engine
-  engine_version     = aws_rds_cluster.aurora_cluster.engine_version
+  count               = 2
+  identifier          = "aurora-instance-${count.index}" 
+  cluster_identifier  = aws_rds_cluster.aurora_cluster.id
+  instance_class      = var.instance_type
+  engine              = aws_rds_cluster.aurora_cluster.engine
+  engine_version      = aws_rds_cluster.aurora_cluster.engine_version
+  publicly_accessible = true
 }
 
 resource "aws_db_subnet_group" "aurora_subnet_group" {
@@ -47,7 +48,8 @@ resource "aws_security_group" "rdssg" {
         from_port   = 3306
         to_port     = 3306
         protocol    = "tcp"
-        cidr_blocks = var.private_subnets
+        cidr_blocks = ["0.0.0.0/0"]
+        #security_groups = var.sg
 
     }
 
